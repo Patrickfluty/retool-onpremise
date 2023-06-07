@@ -21,6 +21,7 @@ services:
       - db-connector-network
       - db-ssh-connector-network
       - workflows-network
+      - code-executor-network
     depends_on:
       - postgres
       - retooldb-postgres
@@ -99,7 +100,6 @@ services:
       - temporal
     environment:
       - SERVICE_TYPE=WORKFLOW_TEMPORAL_WORKER
-      - NODE_OPTIONS=--max_old_space_size=1024
       - DISABLE_DATABASE_MIGRATIONS=true
       - WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_HOST=temporal
       - WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_PORT=7233
@@ -109,6 +109,7 @@ services:
       - backend-network
       - db-connector-network
       - workflows-network
+      - code-executor-network
     restart: on-failure
 
   code-executor:
@@ -120,8 +121,7 @@ services:
     environment:
       - NODE_OPTIONS=--max_old_space_size=1024
     networks:
-      - backend-network
-      - workflows-network
+      - code-executor-network
     # code-executor uses nsjail to sandbox code execution. nsjail requires
     # privileged container access
     privileged: true
@@ -212,6 +212,7 @@ networks:
   db-connector-network:
   db-ssh-connector-network:
   temporal-network:
+  code-executor-network:
 
 volumes:
   ssh:
