@@ -14,6 +14,7 @@ services:
       - WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_HOST=temporal
       - WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_PORT=7233
       - WORKFLOW_BACKEND_HOST=http://api:3000
+      - CODE_EXECUTOR_INGRESS_DOMAIN=http://code-executor:3004
     networks:
       - frontend-network
       - backend-network
@@ -27,6 +28,7 @@ services:
       - db-ssh-connector
       - jobs-runner
       - workflows-worker
+      - code-executor
     command: bash -c "./docker_scripts/wait-for-it.sh postgres:5432; ./docker_scripts/start_api.sh"
     links:
       - postgres
@@ -102,10 +104,27 @@ services:
       - WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_HOST=temporal
       - WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_PORT=7233
       - WORKFLOW_BACKEND_HOST=http://api:3000
+      - CODE_EXECUTOR_INGRESS_DOMAIN=http://code-executor:3004
     networks:
       - backend-network
       - db-connector-network
       - workflows-network
+    restart: on-failure
+
+  code-executor:
+    build:
+      context: ./
+      dockerfile: DockerfileCodeExecutor
+    command: bash -c "./start.sh"
+    env_file: ./docker.env
+    environment:
+      - NODE_OPTIONS=--max_old_space_size=1024
+    networks:
+      - backend-network
+      - workflows-network
+    # code-executor uses nsjail to sandbox code execution. nsjail requires
+    # privileged container access
+    privileged: true
     restart: on-failure
 
   # Retool's storage database. See these docs to migrate to an externally hosted database: https://docs.retool.com/docs/configuring-retools-storage-database
